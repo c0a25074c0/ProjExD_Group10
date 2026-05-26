@@ -158,15 +158,16 @@ class Egg(pg.sprite.Sprite):
     """
     卵に関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, color_name: str):  
         """
         卵画像Surfaceを生成する
-        引数 egg：卵を放つこうかとん
+        引数1 bird：卵を放つこうかとん
+        引数2 color_name：卵の色
         """
         super().__init__()
         self.vx = 0
         self.vy = -1  
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/egg.png"), 0, 0.2)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{color_name}.png"), 0, 0.2)  # 引数として受け取った色名を使って画像を読み込む
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
@@ -397,7 +398,7 @@ class Item(pg.sprite.Sprite):
 
 
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("産め！とうかとん！！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
@@ -416,14 +417,33 @@ def main():
 
     tmr = 0
     clock = pg.time.Clock()
+
+    egg_colors = ["egg","egg_silver","egg_gold"]  # 卵の色変更用の変数
+    egg_idx = 0  # 現在の色のインデックス
+    non_fire_tmr = 0  # 発射していない間のフレーム数を計測
+
     while True:
         key_lst = pg.key.get_pressed()
+        is_fired = False  # 卵を発射したかどうか
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
             
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                eggs.add(Egg(bird))
+                eggs.add(Egg(bird, egg_colors[egg_idx]))  # 現在のインデックスに対応した色の卵を発射
+                is_fired = True
+
+        if is_fired == True:  # 卵を発射した場合
+            non_fire_tmr = 0  # タイマーをリセット
+            egg_idx = 0  #色を0(白)に戻す
+        else:
+            non_fire_tmr +=1  # 発射していない場合はタイマーを増やす
+            if non_fire_tmr >= 100:  # 100フレーム（約2秒）ごとに切り替え
+                non_fire_tmr = 0
+                if egg_idx < len(egg_colors) - 1:
+                    egg_idx += 1
+
         screen.blit(bg_img, [0, 0])
 
         if score.value >= 100:
